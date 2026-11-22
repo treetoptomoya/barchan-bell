@@ -17,19 +17,16 @@
     font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif}
   body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 
-  /* header */
-  header{display:flex;align-items:center;gap:10px;padding:8px 10px;flex:none;background:var(--peach)}
-  #menuBtn{position:relative;width:34px;height:34px;border:none;border-radius:8px;background:transparent;
-    color:var(--peach-ink);font-size:18px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-  #menuBtn span{position:relative}
-  #who{font-size:15px;color:var(--peach-ink);font-weight:600}
-  #conn{margin-left:auto;width:10px;height:10px;border-radius:50%;background:#ccc}
-  #conn.on{background:var(--ok)}
+  /* ⚙️ settings (long-press) + tiny connection dot */
+  .gear{position:relative;flex:none;width:40px;height:40px;border:none;border-radius:50%;background:transparent;
+    font-size:22px;line-height:40px;padding:0;opacity:.75;touch-action:none;user-select:none;-webkit-user-select:none}
+  .gear .conn{position:absolute;right:3px;bottom:5px;width:7px;height:7px;border-radius:50%;background:#ccc}
+  body.online .gear .conn{background:var(--ok)}
 
   /* chat */
-  #chat{flex:1;overflow-y:auto;padding:10px 14px 6px;display:flex;flex-direction:column;gap:6px}
+  #chat{flex:1;min-height:0;overflow-y:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:6px}
   /* one compact line per message, thin underline in the sender's colour with a small tail */
-  .msg{--c:var(--ink);position:relative;max-width:92%;align-self:flex-start;padding:2px 2px 3px;
+  .msg{--c:var(--ink);flex-shrink:0;position:relative;max-width:92%;align-self:flex-start;padding:2px 2px 3px;
     border-bottom:2px solid var(--c);font-size:16px;line-height:1.4;word-break:break-word}
   .msg:not(.right){border-left:2px solid var(--c);border-bottom-left-radius:14px;padding-left:9px}
   .msg.right{align-self:flex-end;text-align:right}
@@ -38,18 +35,24 @@
   .msg .text{white-space:pre-wrap}
   .msg .time{color:var(--muted);font-size:.8em;margin-left:6px;white-space:nowrap}
   .msg .time.fresh{color:#1f6e3f;font-weight:700}
-  .msg.alert{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-  .msg.alert .text{font-weight:700;color:var(--c);white-space:nowrap}
+  .msg.alert .text{font-weight:700;color:var(--c)}
+  /* ばあちゃん's own button presses, on her screen: coloured icon badge + time */
+  .msg.badgeRow{border:none;padding:0;display:flex;align-items:center;gap:6px}
+  .msg.badgeRow::after{display:none}
+  .badge{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+    font-size:19px;line-height:1;box-shadow:0 2px 0 rgba(0,0,0,.18)}
   .empty{margin:auto;color:var(--muted);font-size:16px;text-align:center}
   body.baachan .msg{font-size:19px}
 
   /* bachan's button */
   #bellArea{flex:none;padding:22px 12px 12px;display:none;background:linear-gradient(to top,var(--peach) 0%,#fff 100%)}
   body.baachan #bellArea{display:flex;gap:10px;height:32vh;min-height:200px}
+  #bellLeft{flex:0 0 55%;position:relative;display:flex;align-items:center;justify-content:center}
+  #bellLeft .gear{position:absolute;left:-6px;bottom:-6px}
   #bellArea button{border:none;color:#fff;font-weight:800;font-family:inherit;user-select:none;-webkit-user-select:none}
   #bellArea button:disabled{opacity:1}
-  #bell{flex:0 0 55%;border-radius:26px;background:var(--bell);margin-bottom:8px;
-    font-size:min(48px,9.5vw);letter-spacing:1px;box-shadow:0 8px 0 var(--bell-dark)}
+  #bell{width:150px;height:150px;flex:none;border-radius:50%;background:var(--bell);margin-bottom:8px;
+    font-size:30px;letter-spacing:1px;box-shadow:0 8px 0 var(--bell-dark);padding:0}
   #bell:active{transform:translateY(6px);box-shadow:0 2px 0 var(--bell-dark)}
   #quick{flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
   #quick button{flex:1;border-radius:16px;font-size:min(28px,6.5vw)}
@@ -59,8 +62,8 @@
   #okBtn{background:#2f6fdb;box-shadow:0 6px 0 #1f4fa3}
   #bellArea button.sent{background:var(--ok) !important;color:#fff !important;box-shadow:0 6px 0 #1f6e3f}
   #bellArea button.fail{background:var(--err) !important;color:#fff !important;box-shadow:0 6px 0 #8a2a20}
-  #bell.sent{font-size:min(36px,8vw)}
-  #bell.fail{font-size:min(22px,5vw);letter-spacing:0;padding:0 10px}
+  #bell.sent{font-size:.75em}
+  #bell.fail{font-size:.5em;letter-spacing:0;padding:0 18px}
 
   /* long-press progress circle */
   #holdRing{position:fixed;left:50%;top:50%;width:160px;height:160px;margin:-80px 0 0 -80px;z-index:11;
@@ -73,7 +76,7 @@
   @keyframes fillPie{to{stroke-dashoffset:0}}
 
   /* text input for everyone else */
-  #composer{flex:none;display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#fff}
+  #composer{flex:none;display:flex;align-items:center;gap:6px;padding:10px;border-top:1px solid var(--line);background:#fff}
   body.baachan #composer{display:none}
   #input{flex:1;font-size:17px;padding:12px 14px;border:1px solid var(--line);border-radius:22px;outline:none;font-family:inherit}
   #send{border:none;background:transparent;color:var(--c-tom);font-size:22px;padding:0 6px;line-height:1}
@@ -98,16 +101,13 @@
 </head>
 <body class="baachan">
 
-<header>
-  <button id="menuBtn" aria-label="アカウント切替（長押し）"><span>☰</span></button>
-  <div id="who">ばあちゃん</div>
-  <div id="conn" title="接続状態"></div>
-</header>
-
 <main id="chat"></main>
 
 <div id="bellArea">
-  <button id="bell">ピンポン</button>
+  <div id="bellLeft">
+    <button id="bell">ピンポン</button>
+    <button class="gear" aria-label="設定（長押し）">⚙️<span class="conn"></span></button>
+  </div>
   <div id="quick">
     <button id="ohayo">おはよう</button>
     <button id="kaiketsu">解決</button>
@@ -121,7 +121,8 @@
 </svg>
 
 <form id="composer" autocomplete="off">
-  <input id="input" maxlength="500" placeholder="Type a message…" enterkeyhint="send">
+  <button type="button" class="gear" aria-label="Settings (hold)">⚙️<span class="conn"></span></button>
+  <input id="input" maxlength="500" placeholder="ばあちゃん: Type a message…" enterkeyhint="send">
   <button id="send" type="submit" aria-label="Send">▶</button>
 </form>
 
@@ -147,14 +148,15 @@ const REPLY_URL  = PAGE_URL + "?from=ntfy";        // opened from the notificati
 const STORE_KEY  = "barchan-bell-history";
 // ばあちゃん's buttons. priority 5 = loud/urgent, 3 = normal notification sound.
 const ALERTS = {
-  ping:     {btn:"#bell",     label:"ピンポン", priority:5, cooldown:10000, tags:["bell"],
-             title:"🔔 ピンポン！",   body:"ばあちゃんが呼んでいます",       chat:"🔔 ピンポンしました"},
-  ohayo:    {btn:"#ohayo",    label:"おはよう", priority:3, cooldown:5000,  tags:["sunny"],
-             title:"☀️ おはよう",     body:"ばあちゃんからおはよう！",       chat:"☀️ おはよう！"},
-  kaiketsu: {btn:"#kaiketsu", label:"解決",     priority:3, cooldown:5000,  tags:["white_check_mark"],
-             title:"✅ 解決",         body:"ばあちゃん：もう大丈夫です",     chat:"✅ 解決（もう大丈夫）"},
-  ok:       {btn:"#okBtn",    label:"OK",       priority:3, cooldown:5000,  tags:["ok_hand"],
-             title:"👌 OK",           body:"ばあちゃん：OK",                chat:"👌 OK"}
+// title/body = the phone notification (English, for Tom & Matthew); chat = line in the page.
+  ping:     {btn:"#bell",     label:"ピンポン", priority:5, cooldown:10000, icon:"🔔", color:"#e4572e",
+             title:"🔔 Grandma is calling you",   body:"Tap to reply",  chat:"🔔 ピンポンしました"},
+  ohayo:    {btn:"#ohayo",    label:"おはよう", priority:3, cooldown:5000,  icon:"☀️", color:"#f2b705",
+             title:"☀️ Good morning from Grandma", body:"Tap to reply",  chat:"☀️ おはよう！"},
+  kaiketsu: {btn:"#kaiketsu", label:"解決",     priority:3, cooldown:5000,  icon:"✅", color:"#2e9e5b",
+             title:"✅ Sorted, all fine now",       body:"From Grandma",  chat:"✅ 解決（もう大丈夫）"},
+  ok:       {btn:"#okBtn",    label:"OK",       priority:3, cooldown:5000,  icon:"👌", color:"#2f6fdb",
+             title:"👌 OK",                         body:"From Grandma",  chat:"👌 OK"}
 };
 const COLORS = {"ばあちゃん":"var(--c-baachan)","Tom":"var(--c-tom)","Matthew":"var(--c-matthew)","ゲスト":"var(--c-guest)"};
 
@@ -199,6 +201,14 @@ function render(){
     // ばあちゃん on the right, everyone else on the left
     el.className = "msg" + (m.from==="ばあちゃん" ? " right" : "") + (isAlert ? " alert" : "");
     el.style.setProperty("--c", COLORS[m.from] || "var(--ink)");
+    if (isAlert && user==="ばあちゃん"){
+      // her own presses, on her screen: just a coloured icon badge + time
+      el.className += " badgeRow";
+      const b = document.createElement("span"); b.className="badge";
+      b.style.background = ALERTS[m.type].color; b.textContent = ALERTS[m.type].icon;
+      const t = document.createElement("span"); t.className="time"; t.dataset.t=m.time;
+      el.append(b,t); chat.appendChild(el); continue;
+    }
     const n = document.createElement("span"); n.className="name"; n.textContent=m.from;
     const tx = document.createElement("span"); tx.className="text";
     tx.textContent = isAlert ? ALERTS[m.type].chat : m.text;
@@ -253,7 +263,7 @@ function connect(){
   if (es) es.close();
   const since = lastId ? `?since=${lastId}` : "";
   es = new EventSource(`${SERVER}/${CHAT_TOPIC}/sse${since}`);
-  es.onopen = ()=>$("#conn").classList.add("on");
+  es.onopen = ()=>document.body.classList.add("online");
   es.onmessage = e=>{
     try{
       const ev = JSON.parse(e.data);
@@ -261,7 +271,7 @@ function connect(){
     }catch(err){}
   };
   es.onerror = ()=>{
-    $("#conn").classList.remove("on");
+    document.body.classList.remove("online");
     es.close(); es = null;
     setTimeout(connect, 4000);
   };
@@ -285,15 +295,15 @@ Object.entries(ALERTS).forEach(([type, a])=>{
     unlockAudio();
     if (b.disabled) return;
     b.disabled = true;
-    const reset = ()=>{ b.className=""; b.textContent=a.label; b.disabled=false; };
+    const reset = ()=>{ b.className=""; b.textContent=a.label; b.disabled=false; sizeBell(); };
     try{
       await sendJSON({topic:PING_TOPIC, title:a.title, message:a.body, priority:a.priority,
         click:REPLY_URL, actions:[{action:"view", label:"返信する", url:REPLY_URL, clear:true}]});
       sendChat({from:"ばあちゃん", type, text:""}).catch(()=>{});
-      b.className="sent"; b.textContent = type==="ping" ? "送りました ✓" : "✓";
+      b.className="sent"; b.textContent = type==="ping" ? "送りました ✓" : "✓"; sizeBell();
       setTimeout(reset, a.cooldown);
     }catch(e){
-      b.className="fail"; b.textContent = type==="ping" ? "送れませんでした。もう一度押してね" : "✕";
+      b.className="fail"; b.textContent = type==="ping" ? "送れませんでした。もう一度押してね" : "✕"; sizeBell();
       setTimeout(reset, 3000);
     }
   });
@@ -343,18 +353,20 @@ function popup(m){
 $("#popup").addEventListener("click", ()=>$("#popup").classList.remove("show"));
 
 // ===== Long-press menu =====
-const menuBtn = $("#menuBtn"); let holdTimer;
+let holdTimer;
 const ring = $("#holdRing");
 function holdStart(e){
   e.preventDefault();
-  try{ menuBtn.setPointerCapture(e.pointerId); }catch(err){}   // keep holding even if finger drifts
+  try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(err){}   // keep holding even if finger drifts
   ring.classList.remove("show"); void ring.getBoundingClientRect(); ring.classList.add("show"); // restart animation
   holdTimer = setTimeout(openMenu, 2000);
 }
 function holdEnd(){ ring.classList.remove("show"); clearTimeout(holdTimer); }
-menuBtn.addEventListener("pointerdown", holdStart);
-["pointerup","pointerleave","pointercancel"].forEach(ev=>menuBtn.addEventListener(ev, holdEnd));
-menuBtn.addEventListener("contextmenu", e=>e.preventDefault());
+document.querySelectorAll(".gear").forEach(g=>{
+  g.addEventListener("pointerdown", holdStart);
+  ["pointerup","pointerleave","pointercancel"].forEach(ev=>g.addEventListener(ev, holdEnd));
+  g.addEventListener("contextmenu", e=>e.preventDefault());
+});
 function openMenu(){
   holdEnd();
   document.querySelectorAll("#menu button").forEach(b=>b.classList.toggle("current", b.dataset.user===user));
@@ -367,12 +379,24 @@ $("#menu").addEventListener("click", e=>{
 });
 function setUser(u){
   user = u;
-  $("#who").textContent = u;
+  $("#input").placeholder = u + ": Type a message…";
   document.body.classList.toggle("baachan", u==="ばあちゃん");
-  render();
+  render(); sizeBell();
 }
 
+// ===== Round ピンポン: as big a circle as the left area allows =====
+function sizeBell(){
+  const area = $("#bellLeft"); if (!area.clientWidth) return;
+  const d = Math.max(90, Math.min(area.clientWidth, area.clientHeight - 10));
+  const b = $("#bell");
+  b.style.width = b.style.height = d + "px";
+  const k = b.classList.contains("fail") ? 0.085 : b.classList.contains("sent") ? 0.13 : 0.2;
+  b.style.fontSize = Math.round(d * k) + "px";
+}
+window.addEventListener("resize", sizeBell);
+
 // ===== Start =====
+sizeBell();
 load(); render();
 poll().then(()=>{ render(); connect(); });
 
