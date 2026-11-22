@@ -112,6 +112,8 @@ const SERVER     = "https://ntfy.sh";
 const CHAT_TOPIC = "barchan-bell-chat-838sjqnlsztj";  // page-only chat
 const PING_TOPIC = "barchan-bell-ping-8u8yaapvuyte";  // subscribe to THIS in the ntfy app
 const COOLDOWN_MS = 10000;
+const PAGE_URL   = "https://treetoptomoya.github.io/barchan-bell/";
+const REPLY_URL  = PAGE_URL + "?from=ntfy";        // opened from the notification
 const STORE_KEY  = "barchan-bell-history";
 const COLORS = {"ばあちゃん":"var(--c-baachan)","Tom":"var(--c-tom)","Matthew":"var(--c-matthew)","ゲスト":"var(--c-guest)"};
 
@@ -234,7 +236,8 @@ bell.addEventListener("click", async ()=>{
   if (bell.disabled) return;
   bell.disabled = true;
   try{
-    await sendJSON({topic:PING_TOPIC, title:"🔔 ピンポン！", message:"ばあちゃんが呼んでいます", priority:5, tags:["bell"]});
+    await sendJSON({topic:PING_TOPIC, title:"🔔 ピンポン！", message:"ばあちゃんが呼んでいます", priority:5, tags:["bell"],
+      click:REPLY_URL, actions:[{action:"view", label:"返信する", url:REPLY_URL, clear:true}]});
     sendChat({from:"ばあちゃん", type:"ping", text:""}).catch(()=>{});
     bell.className="sent"; bell.textContent="送りました ✓";
     setTimeout(()=>{ bell.className=""; bell.textContent="ピンポン"; bell.disabled=false; }, COOLDOWN_MS);
@@ -314,6 +317,13 @@ function setUser(u){
 // ===== Start =====
 load(); render();
 poll().then(()=>{ render(); connect(); });
+
+// Opened from the ntfy notification → ask who's replying.
+// The ?from=ntfy is removed right away, so a reload still opens as ばあちゃん.
+if (new URLSearchParams(location.search).get("from")==="ntfy"){
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+  openMenu();
+}
 </script>
 </body>
 </html>
