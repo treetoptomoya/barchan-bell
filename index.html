@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#fff8ef">
+<meta name="mobile-web-app-capable" content="yes">
+<title>ばあちゃんベル</title>
+<style>
+  :root{
+    --bg:#fff8ef; --ink:#2b2420; --muted:#8a7f76; --line:#eadfd2;
+    --bell:#e4572e; --bell-dark:#b8401d; --ok:#2e9e5b; --err:#c0392b;
+    --c-baachan:#e4572e; --c-tom:#2f6fdb; --c-matthew:#2e9e5b; --c-guest:#8e5bd1;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif}
+  body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+
+  /* header */
+  header{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line);flex:none}
+  #menuBtn{position:relative;width:34px;height:34px;border:none;border-radius:8px;background:transparent;
+    color:var(--muted);font-size:18px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+  #menuBtn .fill{position:absolute;inset:0;background:var(--line);transform:scaleX(0);transform-origin:left}
+  #menuBtn.holding .fill{transform:scaleX(1);transition:transform 2s linear}
+  #menuBtn span{position:relative}
+  #who{font-size:15px;color:var(--muted)}
+  #conn{margin-left:auto;width:10px;height:10px;border-radius:50%;background:#ccc}
+  #conn.on{background:var(--ok)}
+
+  /* chat */
+  #chat{flex:1;overflow-y:auto;padding:12px 12px 4px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:88%;padding:10px 14px;border-radius:16px;background:#fff;border:1px solid var(--line);align-self:flex-start}
+  .msg.mine{align-self:flex-end;background:#fdf0e3}
+  .msg .meta{display:flex;gap:8px;align-items:baseline;font-size:13px;margin-bottom:2px}
+  .msg .name{font-weight:700}
+  .msg .time{color:var(--muted)}
+  .msg .text{font-size:18px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+  .msg.ping{align-self:center;background:#ffe9e1;border-color:#f6c3b2;text-align:center}
+  .msg.ping .text{font-weight:700}
+  .empty{margin:auto;color:var(--muted);font-size:16px;text-align:center}
+  body.baachan .msg .text{font-size:26px}
+  body.baachan .msg .meta{font-size:17px}
+
+  /* bachan's button */
+  #bellArea{flex:none;padding:12px;display:none}
+  body.baachan #bellArea{display:block}
+  #bell{width:100%;height:34vh;min-height:180px;border:none;border-radius:28px;background:var(--bell);color:#fff;
+    font-size:64px;font-weight:800;letter-spacing:4px;box-shadow:0 8px 0 var(--bell-dark);
+    user-select:none;-webkit-user-select:none}
+  #bell:active{transform:translateY(6px);box-shadow:0 2px 0 var(--bell-dark)}
+  #bell.sent{background:var(--ok);box-shadow:0 8px 0 #1f6e3f;font-size:44px}
+  #bell.fail{background:var(--err);box-shadow:0 8px 0 #8a2a20;font-size:30px;letter-spacing:0}
+  #bell:disabled{opacity:1}
+
+  /* text input for everyone else */
+  #composer{flex:none;display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#fff}
+  body.baachan #composer{display:none}
+  #input{flex:1;font-size:17px;padding:12px 14px;border:1px solid var(--line);border-radius:22px;outline:none;font-family:inherit}
+  #send{border:none;border-radius:22px;padding:0 18px;font-size:16px;font-weight:700;background:var(--ink);color:#fff}
+  #send:disabled{opacity:.4}
+
+  /* account menu */
+  #menu{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10}
+  #menu.open{display:flex}
+  #menu .box{background:#fff;border-radius:18px;padding:18px;width:min(320px,86vw);display:flex;flex-direction:column;gap:10px}
+  #menu h2{margin:0 0 4px;font-size:16px;color:var(--muted);font-weight:600}
+  #menu button{font-size:20px;padding:14px;border-radius:12px;border:2px solid var(--line);background:#fff;font-family:inherit;text-align:left}
+  #menu button.current{border-color:var(--ink)}
+
+  /* big popup for new replies (bachan only) */
+  #popup{position:fixed;left:4vw;right:4vw;top:18vh;background:#fff;border-radius:24px;padding:24px;
+    box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:9;display:none;text-align:center}
+  #popup.show{display:block;animation:pop .25s ease-out}
+  #popup .name{font-size:26px;font-weight:800;margin-bottom:8px}
+  #popup .text{font-size:36px;line-height:1.4;word-break:break-word}
+  @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body class="baachan">
+
+<header>
+  <button id="menuBtn" aria-label="アカウント切替（長押し）"><div class="fill"></div><span>☰</span></button>
+  <div id="who">ばあちゃん</div>
+  <div id="conn" title="接続状態"></div>
+</header>
+
+<main id="chat"></main>
+
+<div id="bellArea"><button id="bell">ピンポン</button></div>
+
+<form id="composer" autocomplete="off">
+  <input id="input" maxlength="500" placeholder="メッセージを入力…" enterkeyhint="send">
+  <button id="send" type="submit">送信</button>
+</form>
+
+<div id="menu">
+  <div class="box">
+    <h2>だれが使っていますか？</h2>
+    <button data-user="ばあちゃん">ばあちゃん</button>
+    <button data-user="Tom">Tom</button>
+    <button data-user="Matthew">Matthew</button>
+    <button data-user="ゲスト">ゲスト</button>
+  </div>
+</div>
+
+<div id="popup"><div class="name"></div><div class="text"></div></div>
+
+<script>
+// ===== Settings =====
+const SERVER     = "https://ntfy.sh";
+const CHAT_TOPIC = "barchan-bell-chat-838sjqnlsztj";  // page-only chat
+const PING_TOPIC = "barchan-bell-ping-8u8yaapvuyte";  // subscribe to THIS in the ntfy app
+const COOLDOWN_MS = 10000;
+const STORE_KEY  = "barchan-bell-history";
+const COLORS = {"ばあちゃん":"var(--c-baachan)","Tom":"var(--c-tom)","Matthew":"var(--c-matthew)","ゲスト":"var(--c-guest)"};
+
+// ===== State =====
+let user = "ばあちゃん";           // always start as ばあちゃん
+let messages = [];                // {id,time,from,text,type}
+const seen = new Set();
+let lastId = null;
+let es = null;
+
+const $ = s => document.querySelector(s);
+const chat = $("#chat");
+
+// ===== Storage (best effort) =====
+function load(){
+  try{ const d = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); d.forEach(m=>add(m,false)); }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(messages.slice(-300))); }catch(e){}
+}
+
+// ===== Time labels =====
+function rel(t){
+  const s = Math.floor(Date.now()/1000 - t);
+  if (s < 60) return "たった今";
+  if (s < 3600) return Math.floor(s/60) + "分前";
+  if (s < 86400) return Math.floor(s/3600) + "時間前";
+  const d = new Date(t*1000);
+  return (d.getMonth()+1)+"/"+d.getDate()+" "+d.getHours()+":"+String(d.getMinutes()).padStart(2,"0");
+}
+
+// ===== Rendering =====
+function render(){
+  chat.innerHTML = "";
+  if (!messages.length){
+    const e = document.createElement("div"); e.className="empty";
+    e.textContent = "まだメッセージはありません"; chat.appendChild(e); return;
+  }
+  for (const m of messages){
+    const el = document.createElement("div");
+    el.className = "msg" + (m.type==="ping" ? " ping" : "") + (m.from===user && m.type!=="ping" ? " mine" : "");
+    const meta = document.createElement("div"); meta.className="meta";
+    const n = document.createElement("span"); n.className="name"; n.textContent=m.from;
+    n.style.color = COLORS[m.from] || "var(--ink)";
+    const t = document.createElement("span"); t.className="time"; t.dataset.t=m.time; t.textContent=rel(m.time);
+    meta.append(n,t);
+    const tx = document.createElement("div"); tx.className="text";
+    tx.textContent = m.type==="ping" ? "🔔 ばあちゃんがピンポンしました" : m.text;
+    el.append(meta,tx); chat.appendChild(el);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+setInterval(()=>document.querySelectorAll(".time").forEach(el=>el.textContent=rel(+el.dataset.t)), 30000);
+
+// ===== Incoming messages =====
+function parse(ev){
+  // ev = ntfy event {id,time,event,message}
+  let body;
+  try{ body = JSON.parse(ev.message); }catch(e){ body = {from:"?", text:ev.message}; }
+  return {id:ev.id, time:ev.time, from:body.from||"?", text:String(body.text||""), type:body.type||"text"};
+}
+function add(m, live){
+  if (!m || seen.has(m.id)) return false;
+  seen.add(m.id);
+  messages.push(m);
+  messages.sort((a,b)=>a.time-b.time);
+  lastId = messages[messages.length-1].id;
+  if (live && user==="ばあちゃん" && m.from!=="ばあちゃん" && Date.now()/1000 - m.time < 60){
+    chime(); popup(m);
+  }
+  return true;
+}
+
+async function poll(){
+  try{
+    const r = await fetch(`${SERVER}/${CHAT_TOPIC}/json?poll=1&since=all`);
+    const txt = await r.text();
+    let changed = false;
+    txt.split("\n").forEach(line=>{
+      if (!line.trim()) return;
+      try{ const ev = JSON.parse(line); if (ev.event==="message" && add(parse(ev),false)) changed = true; }catch(e){}
+    });
+    if (changed){ save(); render(); }
+  }catch(e){}
+}
+
+function connect(){
+  if (es) es.close();
+  const since = lastId ? `?since=${lastId}` : "";
+  es = new EventSource(`${SERVER}/${CHAT_TOPIC}/sse${since}`);
+  es.onopen = ()=>$("#conn").classList.add("on");
+  es.onmessage = e=>{
+    try{
+      const ev = JSON.parse(e.data);
+      if (ev.event==="message" && add(parse(ev),true)){ save(); render(); }
+    }catch(err){}
+  };
+  es.onerror = ()=>{
+    $("#conn").classList.remove("on");
+    es.close(); es = null;
+    setTimeout(connect, 4000);
+  };
+}
+document.addEventListener("visibilitychange", ()=>{
+  if (document.visibilityState==="visible"){ poll().then(connect); }
+});
+
+// ===== Sending =====
+function sendJSON(obj){
+  return fetch(SERVER, {method:"POST", body:JSON.stringify(obj)}).then(r=>{ if(!r.ok) throw new Error(r.status); });
+}
+function sendChat(payload){
+  return sendJSON({topic:CHAT_TOPIC, message:JSON.stringify(payload)});
+}
+
+// ===== Bachan's bell =====
+const bell = $("#bell");
+bell.addEventListener("click", async ()=>{
+  unlockAudio();
+  if (bell.disabled) return;
+  bell.disabled = true;
+  try{
+    await sendJSON({topic:PING_TOPIC, title:"🔔 ピンポン！", message:"ばあちゃんが呼んでいます", priority:5, tags:["bell"]});
+    sendChat({from:"ばあちゃん", type:"ping", text:""}).catch(()=>{});
+    bell.className="sent"; bell.textContent="送りました ✓";
+    setTimeout(()=>{ bell.className=""; bell.textContent="ピンポン"; bell.disabled=false; }, COOLDOWN_MS);
+  }catch(e){
+    bell.className="fail"; bell.textContent="送れませんでした。もう一度押してね";
+    setTimeout(()=>{ bell.className=""; bell.textContent="ピンポン"; bell.disabled=false; }, 3000);
+  }
+});
+
+// ===== Text messages (Tom / Matthew / ゲスト) =====
+$("#composer").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const input = $("#input"), text = input.value.trim();
+  if (!text) return;
+  $("#send").disabled = true;
+  try{ await sendChat({from:user, type:"text", text}); input.value=""; }
+  catch(err){ alert("送れませんでした。もう一度試してください。"); }
+  $("#send").disabled = false; input.focus();
+});
+
+// ===== Chime + popup =====
+let actx = null;
+function unlockAudio(){
+  try{
+    if (!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if (actx.state==="suspended") actx.resume();
+  }catch(e){}
+}
+document.addEventListener("pointerdown", unlockAudio, {once:false, passive:true});
+function chime(){
+  if (!actx) return;
+  const now = actx.currentTime;
+  [[880,0],[660,0.35]].forEach(([f,d])=>{
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type="sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001, now+d);
+    g.gain.exponentialRampToValueAtTime(0.4, now+d+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+d+1.2);
+    o.connect(g).connect(actx.destination); o.start(now+d); o.stop(now+d+1.3);
+  });
+}
+let popTimer;
+function popup(m){
+  const p = $("#popup");
+  p.querySelector(".name").textContent = m.from + " より";
+  p.querySelector(".name").style.color = COLORS[m.from] || "var(--ink)";
+  p.querySelector(".text").textContent = m.text;
+  p.classList.add("show");
+  clearTimeout(popTimer); popTimer = setTimeout(()=>p.classList.remove("show"), 8000);
+}
+$("#popup").addEventListener("click", ()=>$("#popup").classList.remove("show"));
+
+// ===== Long-press menu =====
+const menuBtn = $("#menuBtn"); let holdTimer;
+function holdStart(e){ e.preventDefault(); menuBtn.classList.add("holding"); holdTimer = setTimeout(openMenu, 2000); }
+function holdEnd(){ menuBtn.classList.remove("holding"); clearTimeout(holdTimer); }
+menuBtn.addEventListener("pointerdown", holdStart);
+["pointerup","pointerleave","pointercancel"].forEach(ev=>menuBtn.addEventListener(ev, holdEnd));
+menuBtn.addEventListener("contextmenu", e=>e.preventDefault());
+function openMenu(){
+  holdEnd();
+  document.querySelectorAll("#menu button").forEach(b=>b.classList.toggle("current", b.dataset.user===user));
+  $("#menu").classList.add("open");
+}
+$("#menu").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-user]");
+  if (b) setUser(b.dataset.user);
+  $("#menu").classList.remove("open");
+});
+function setUser(u){
+  user = u;
+  $("#who").textContent = u;
+  document.body.classList.toggle("baachan", u==="ばあちゃん");
+  render();
+}
+
+// ===== Start =====
+load(); render();
+poll().then(()=>{ render(); connect(); });
+</script>
+</body>
+</html>
