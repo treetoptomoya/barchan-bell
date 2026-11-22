@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#fff8ef">
+<meta name="theme-color" content="#fde3d0">
 <meta name="mobile-web-app-capable" content="yes">
 <title>ばあちゃんベル</title>
 <style>
   :root{
-    --bg:#fff8ef; --ink:#2b2420; --muted:#8a7f76; --line:#eadfd2;
+    --bg:#ffffff; --peach:#fde3d0; --peach-ink:#c4622d; --ink:#2b2420; --muted:#8a7f76; --line:#eee4dc;
     --bell:#e4572e; --bell-dark:#b8401d; --ok:#2e9e5b; --err:#c0392b;
-    --c-baachan:#e4572e; --c-tom:#2f6fdb; --c-matthew:#2e9e5b; --c-guest:#8e5bd1;
+    --c-baachan:#e4572e; --c-tom:#2f6fdb; --c-matthew:#2e9e5b; --c-guest:#7a7a7a;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
@@ -18,46 +18,65 @@
   body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 
   /* header */
-  header{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line);flex:none}
+  header{display:flex;align-items:center;gap:10px;padding:8px 10px;flex:none;background:var(--peach)}
   #menuBtn{position:relative;width:34px;height:34px;border:none;border-radius:8px;background:transparent;
-    color:var(--muted);font-size:18px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-  #menuBtn .fill{position:absolute;inset:0;background:var(--line);transform:scaleX(0);transform-origin:left}
-  #menuBtn.holding .fill{transform:scaleX(1);transition:transform 2s linear}
+    color:var(--peach-ink);font-size:18px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
   #menuBtn span{position:relative}
-  #who{font-size:15px;color:var(--muted)}
+  #who{font-size:15px;color:var(--peach-ink);font-weight:600}
   #conn{margin-left:auto;width:10px;height:10px;border-radius:50%;background:#ccc}
   #conn.on{background:var(--ok)}
 
   /* chat */
-  #chat{flex:1;overflow-y:auto;padding:12px 12px 4px;display:flex;flex-direction:column;gap:10px}
-  .msg{max-width:88%;padding:10px 14px;border-radius:16px;background:#fff;border:1px solid var(--line);align-self:flex-start}
-  .msg.mine{align-self:flex-end;background:#fdf0e3}
-  .msg .meta{display:flex;gap:8px;align-items:baseline;font-size:13px;margin-bottom:2px}
-  .msg .name{font-weight:700}
-  .msg .time{color:var(--muted)}
-  .msg .text{font-size:18px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
-  .msg.ping{align-self:center;background:#ffe9e1;border-color:#f6c3b2;text-align:center}
-  .msg.ping .text{font-weight:700}
+  #chat{flex:1;overflow-y:auto;padding:10px 14px 6px;display:flex;flex-direction:column;gap:6px}
+  /* one compact line per message, thin underline in the sender's colour with a small tail */
+  .msg{--c:var(--ink);position:relative;max-width:92%;align-self:flex-start;padding:2px 2px 3px;
+    border-bottom:2px solid var(--c);font-size:16px;line-height:1.4;word-break:break-word}
+  .msg:not(.right){border-left:2px solid var(--c);border-bottom-left-radius:14px;padding-left:9px}
+  .msg.right{align-self:flex-end;text-align:right}
+  .msg.right::after{content:"";position:absolute;bottom:-7px;right:-1px;border-top:6px solid var(--c);border-left:7px solid transparent}
+  .msg .name{font-weight:700;color:var(--c);margin-right:6px}
+  .msg .text{white-space:pre-wrap}
+  .msg .time{color:var(--muted);font-size:.8em;margin-left:6px;white-space:nowrap}
+  .msg .time.fresh{color:#1f6e3f;font-weight:700}
+  .msg.alert{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .msg.alert .text{font-weight:700;color:var(--c);white-space:nowrap}
   .empty{margin:auto;color:var(--muted);font-size:16px;text-align:center}
-  body.baachan .msg .text{font-size:26px}
-  body.baachan .msg .meta{font-size:17px}
+  body.baachan .msg{font-size:19px}
 
   /* bachan's button */
-  #bellArea{flex:none;padding:12px;display:none}
-  body.baachan #bellArea{display:block}
-  #bell{width:100%;height:34vh;min-height:180px;border:none;border-radius:28px;background:var(--bell);color:#fff;
-    font-size:64px;font-weight:800;letter-spacing:4px;box-shadow:0 8px 0 var(--bell-dark);
-    user-select:none;-webkit-user-select:none}
+  #bellArea{flex:none;padding:22px 12px 12px;display:none;background:linear-gradient(to top,var(--peach) 0%,#fff 100%)}
+  body.baachan #bellArea{display:flex;gap:10px;height:32vh;min-height:200px}
+  #bellArea button{border:none;color:#fff;font-weight:800;font-family:inherit;user-select:none;-webkit-user-select:none}
+  #bellArea button:disabled{opacity:1}
+  #bell{flex:0 0 55%;border-radius:26px;background:var(--bell);margin-bottom:8px;
+    font-size:min(48px,9.5vw);letter-spacing:1px;box-shadow:0 8px 0 var(--bell-dark)}
   #bell:active{transform:translateY(6px);box-shadow:0 2px 0 var(--bell-dark)}
-  #bell.sent{background:var(--ok);box-shadow:0 8px 0 #1f6e3f;font-size:44px}
-  #bell.fail{background:var(--err);box-shadow:0 8px 0 #8a2a20;font-size:30px;letter-spacing:0}
-  #bell:disabled{opacity:1}
+  #quick{flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+  #quick button{flex:1;border-radius:16px;font-size:min(28px,6.5vw)}
+  #quick button:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+  #ohayo{background:#f2b705;color:#3a2a00 !important;box-shadow:0 6px 0 #b98b00}
+  #kaiketsu{background:#2e9e5b;box-shadow:0 6px 0 #1f6e3f}
+  #okBtn{background:#2f6fdb;box-shadow:0 6px 0 #1f4fa3}
+  #bellArea button.sent{background:var(--ok) !important;color:#fff !important;box-shadow:0 6px 0 #1f6e3f}
+  #bellArea button.fail{background:var(--err) !important;color:#fff !important;box-shadow:0 6px 0 #8a2a20}
+  #bell.sent{font-size:min(36px,8vw)}
+  #bell.fail{font-size:min(22px,5vw);letter-spacing:0;padding:0 10px}
+
+  /* long-press progress circle */
+  #holdRing{position:fixed;left:50%;top:50%;width:160px;height:160px;margin:-80px 0 0 -80px;z-index:11;
+    display:none;pointer-events:none}
+  #holdRing.show{display:block}
+  #holdRing .bg{fill:rgba(255,255,255,.95);stroke:#f5d3bf;stroke-width:2}
+  #holdRing .pie{fill:none;stroke:#f5a97f;stroke-width:50;transform:rotate(-90deg);transform-origin:80px 80px;
+    stroke-dasharray:157.08;stroke-dashoffset:157.08}
+  #holdRing.show .pie{animation:fillPie 2s linear forwards}
+  @keyframes fillPie{to{stroke-dashoffset:0}}
 
   /* text input for everyone else */
   #composer{flex:none;display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#fff}
   body.baachan #composer{display:none}
   #input{flex:1;font-size:17px;padding:12px 14px;border:1px solid var(--line);border-radius:22px;outline:none;font-family:inherit}
-  #send{border:none;border-radius:22px;padding:0 18px;font-size:16px;font-weight:700;background:var(--ink);color:#fff}
+  #send{border:none;background:transparent;color:var(--c-tom);font-size:22px;padding:0 6px;line-height:1}
   #send:disabled{opacity:.4}
 
   /* account menu */
@@ -80,18 +99,30 @@
 <body class="baachan">
 
 <header>
-  <button id="menuBtn" aria-label="アカウント切替（長押し）"><div class="fill"></div><span>☰</span></button>
+  <button id="menuBtn" aria-label="アカウント切替（長押し）"><span>☰</span></button>
   <div id="who">ばあちゃん</div>
   <div id="conn" title="接続状態"></div>
 </header>
 
 <main id="chat"></main>
 
-<div id="bellArea"><button id="bell">ピンポン</button></div>
+<div id="bellArea">
+  <button id="bell">ピンポン</button>
+  <div id="quick">
+    <button id="ohayo">おはよう</button>
+    <button id="kaiketsu">解決</button>
+    <button id="okBtn">OK</button>
+  </div>
+</div>
+
+<svg id="holdRing" viewBox="0 0 160 160" aria-hidden="true">
+  <circle class="bg" cx="80" cy="80" r="76"/>
+  <circle class="pie" cx="80" cy="80" r="25"/>
+</svg>
 
 <form id="composer" autocomplete="off">
-  <input id="input" maxlength="500" placeholder="メッセージを入力…" enterkeyhint="send">
-  <button id="send" type="submit">送信</button>
+  <input id="input" maxlength="500" placeholder="Type a message…" enterkeyhint="send">
+  <button id="send" type="submit" aria-label="Send">▶</button>
 </form>
 
 <div id="menu">
@@ -111,10 +142,20 @@
 const SERVER     = "https://ntfy.sh";
 const CHAT_TOPIC = "barchan-bell-chat-838sjqnlsztj";  // page-only chat
 const PING_TOPIC = "barchan-bell-ping-8u8yaapvuyte";  // subscribe to THIS in the ntfy app
-const COOLDOWN_MS = 10000;
 const PAGE_URL   = "https://treetoptomoya.github.io/barchan-bell/";
 const REPLY_URL  = PAGE_URL + "?from=ntfy";        // opened from the notification
 const STORE_KEY  = "barchan-bell-history";
+// ばあちゃん's buttons. priority 5 = loud/urgent, 3 = normal notification sound.
+const ALERTS = {
+  ping:     {btn:"#bell",     label:"ピンポン", priority:5, cooldown:10000, tags:["bell"],
+             title:"🔔 ピンポン！",   body:"ばあちゃんが呼んでいます",       chat:"🔔 ピンポンしました"},
+  ohayo:    {btn:"#ohayo",    label:"おはよう", priority:3, cooldown:5000,  tags:["sunny"],
+             title:"☀️ おはよう",     body:"ばあちゃんからおはよう！",       chat:"☀️ おはよう！"},
+  kaiketsu: {btn:"#kaiketsu", label:"解決",     priority:3, cooldown:5000,  tags:["white_check_mark"],
+             title:"✅ 解決",         body:"ばあちゃん：もう大丈夫です",     chat:"✅ 解決（もう大丈夫）"},
+  ok:       {btn:"#okBtn",    label:"OK",       priority:3, cooldown:5000,  tags:["ok_hand"],
+             title:"👌 OK",           body:"ばあちゃん：OK",                chat:"👌 OK"}
+};
 const COLORS = {"ばあちゃん":"var(--c-baachan)","Tom":"var(--c-tom)","Matthew":"var(--c-matthew)","ゲスト":"var(--c-guest)"};
 
 // ===== State =====
@@ -154,19 +195,27 @@ function render(){
   }
   for (const m of messages){
     const el = document.createElement("div");
-    el.className = "msg" + (m.type==="ping" ? " ping" : "") + (m.from===user && m.type!=="ping" ? " mine" : "");
-    const meta = document.createElement("div"); meta.className="meta";
+    const isAlert = !!ALERTS[m.type];
+    // ばあちゃん on the right, everyone else on the left
+    el.className = "msg" + (m.from==="ばあちゃん" ? " right" : "") + (isAlert ? " alert" : "");
+    el.style.setProperty("--c", COLORS[m.from] || "var(--ink)");
     const n = document.createElement("span"); n.className="name"; n.textContent=m.from;
-    n.style.color = COLORS[m.from] || "var(--ink)";
-    const t = document.createElement("span"); t.className="time"; t.dataset.t=m.time; t.textContent=rel(m.time);
-    meta.append(n,t);
-    const tx = document.createElement("div"); tx.className="text";
-    tx.textContent = m.type==="ping" ? "🔔 ばあちゃんがピンポンしました" : m.text;
-    el.append(meta,tx); chat.appendChild(el);
+    const tx = document.createElement("span"); tx.className="text";
+    tx.textContent = isAlert ? ALERTS[m.type].chat : m.text;
+    const t = document.createElement("span"); t.className="time"; t.dataset.t=m.time;
+    el.append(n,tx,t); chat.appendChild(el);
   }
+  updateTimes();
   chat.scrollTop = chat.scrollHeight;
 }
-setInterval(()=>document.querySelectorAll(".time").forEach(el=>el.textContent=rel(+el.dataset.t)), 30000);
+function updateTimes(){
+  document.querySelectorAll(".time").forEach(el=>{
+    const t = +el.dataset.t;
+    el.textContent = rel(t);
+    el.classList.toggle("fresh", Date.now()/1000 - t < 60);   // たった今 in dark green
+  });
+}
+setInterval(updateTimes, 15000);
 
 // ===== Incoming messages =====
 function parse(ev){
@@ -229,22 +278,25 @@ function sendChat(payload){
   return sendJSON({topic:CHAT_TOPIC, message:JSON.stringify(payload)});
 }
 
-// ===== Bachan's bell =====
-const bell = $("#bell");
-bell.addEventListener("click", async ()=>{
-  unlockAudio();
-  if (bell.disabled) return;
-  bell.disabled = true;
-  try{
-    await sendJSON({topic:PING_TOPIC, title:"🔔 ピンポン！", message:"ばあちゃんが呼んでいます", priority:5, tags:["bell"],
-      click:REPLY_URL, actions:[{action:"view", label:"返信する", url:REPLY_URL, clear:true}]});
-    sendChat({from:"ばあちゃん", type:"ping", text:""}).catch(()=>{});
-    bell.className="sent"; bell.textContent="送りました ✓";
-    setTimeout(()=>{ bell.className=""; bell.textContent="ピンポン"; bell.disabled=false; }, COOLDOWN_MS);
-  }catch(e){
-    bell.className="fail"; bell.textContent="送れませんでした。もう一度押してね";
-    setTimeout(()=>{ bell.className=""; bell.textContent="ピンポン"; bell.disabled=false; }, 3000);
-  }
+// ===== ばあちゃん's buttons (ピンポン / おはよう / 解決 / OK) =====
+Object.entries(ALERTS).forEach(([type, a])=>{
+  const b = $(a.btn);
+  b.addEventListener("click", async ()=>{
+    unlockAudio();
+    if (b.disabled) return;
+    b.disabled = true;
+    const reset = ()=>{ b.className=""; b.textContent=a.label; b.disabled=false; };
+    try{
+      await sendJSON({topic:PING_TOPIC, title:a.title, message:a.body, priority:a.priority,
+        click:REPLY_URL, actions:[{action:"view", label:"返信する", url:REPLY_URL, clear:true}]});
+      sendChat({from:"ばあちゃん", type, text:""}).catch(()=>{});
+      b.className="sent"; b.textContent = type==="ping" ? "送りました ✓" : "✓";
+      setTimeout(reset, a.cooldown);
+    }catch(e){
+      b.className="fail"; b.textContent = type==="ping" ? "送れませんでした。もう一度押してね" : "✕";
+      setTimeout(reset, 3000);
+    }
+  });
 });
 
 // ===== Text messages (Tom / Matthew / ゲスト) =====
@@ -292,8 +344,14 @@ $("#popup").addEventListener("click", ()=>$("#popup").classList.remove("show"));
 
 // ===== Long-press menu =====
 const menuBtn = $("#menuBtn"); let holdTimer;
-function holdStart(e){ e.preventDefault(); menuBtn.classList.add("holding"); holdTimer = setTimeout(openMenu, 2000); }
-function holdEnd(){ menuBtn.classList.remove("holding"); clearTimeout(holdTimer); }
+const ring = $("#holdRing");
+function holdStart(e){
+  e.preventDefault();
+  try{ menuBtn.setPointerCapture(e.pointerId); }catch(err){}   // keep holding even if finger drifts
+  ring.classList.remove("show"); void ring.getBoundingClientRect(); ring.classList.add("show"); // restart animation
+  holdTimer = setTimeout(openMenu, 2000);
+}
+function holdEnd(){ ring.classList.remove("show"); clearTimeout(holdTimer); }
 menuBtn.addEventListener("pointerdown", holdStart);
 ["pointerup","pointerleave","pointercancel"].forEach(ev=>menuBtn.addEventListener(ev, holdEnd));
 menuBtn.addEventListener("contextmenu", e=>e.preventDefault());
